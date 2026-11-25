@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - CarpoolMatch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>tailwind.config={theme:{extend:{colors:{'surface-container-low':'#f2f3ff','secondary':'#006c49','surface-variant':'#dae2fd','surface-container-lowest':'#ffffff','on-secondary':'#ffffff','secondary-container':'#6cf8bb','on-secondary-container':'#00714d','error-container':'#ffdad6','on-error-container':'#93000a','error':'#ba1a1a','on-error':'#ffffff','primary-container':'#2563eb','on-primary-container':'#eeefff','on-primary':'#ffffff','on-surface':'#131b2e','on-surface-variant':'#434655','surface-container':'#eaedff','surface-container-high':'#e2e7ff','surface-container-highest':'#dae2fd','surface':'#faf8ff','primary':'#004ac6','primary-fixed':'#dbe1ff','on-primary-fixed':'#00174b','secondary-fixed':'#6ffbbe','outline':'#737686','outline-variant':'#c3c6d7'},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}</script>
+</head>
+<body class="bg-surface font-sans text-on-surface antialiased min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+    <!-- Logo -->
+    <a href="/" class="flex items-center justify-center gap-2 mb-8">
+      <div class="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-md">
+        <span class="material-symbols-outlined text-xl" style="font-variation-settings:'FILL' 1">directions_car</span>
+      </div>
+      <div class="flex flex-col">
+        <span class="text-lg font-bold text-primary tracking-tight leading-tight">CarpoolMatch</span>
+        <span class="text-[10px] font-semibold text-on-surface-variant tracking-wide">Greater Cairo Campuses</span>
+      </div>
+    </a>
+
+    <!-- Register Card -->
+    <div class="bg-surface-container-lowest rounded-2xl shadow-lg p-8">
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-bold text-on-surface">Create Account</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Join the student carpool network</p>
+      </div>
+
+      <div id="error-msg"></div>
+
+      <form id="register-form" class="space-y-4">
+        <div>
+          <label for="name" class="block text-sm font-semibold text-on-surface mb-1.5">Full Name</label>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant">person</span>
+            <input type="text" id="name" required placeholder="Your full name"
+              class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-outline-variant bg-surface text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+          </div>
+        </div>
+
+        <div>
+          <label for="email" class="block text-sm font-semibold text-on-surface mb-1.5">University Email</label>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant">mail</span>
+            <input type="email" id="email" required placeholder="you@university.edu"
+              class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-outline-variant bg-surface text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+          </div>
+          <p class="text-xs text-on-surface-variant mt-1">Accepted: .edu, .ac, .edu.* domains (AUC, GUC, Cairo Univ, etc.)</p>
+        </div>
+
+        <div>
+          <label for="password" class="block text-sm font-semibold text-on-surface mb-1.5">Password</label>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant">lock</span>
+            <input type="password" id="password" required minlength="8" placeholder="At least 8 characters"
+              class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-outline-variant bg-surface text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+          </div>
+        </div>
+
+        <div>
+          <label for="role" class="block text-sm font-semibold text-on-surface mb-1.5">I am a</label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="relative cursor-pointer">
+              <input type="radio" name="roleRadio" value="rider" checked class="peer sr-only" onchange="document.getElementById('role').value='rider'">
+              <div class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-outline-variant bg-surface peer-checked:border-primary peer-checked:bg-primary-fixed/30 transition-all">
+                <span class="material-symbols-outlined text-3xl text-on-surface-variant peer-checked:text-primary">hail</span>
+                <span class="text-sm font-semibold text-on-surface">Rider</span>
+                <span class="text-xs text-on-surface-variant">I need rides</span>
+              </div>
+            </label>
+            <label class="relative cursor-pointer">
+              <input type="radio" name="roleRadio" value="driver" class="peer sr-only" onchange="document.getElementById('role').value='driver'">
+              <div class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-outline-variant bg-surface peer-checked:border-secondary peer-checked:bg-secondary-container/30 transition-all">
+                <span class="material-symbols-outlined text-3xl text-on-surface-variant peer-checked:text-secondary">directions_car</span>
+                <span class="text-sm font-semibold text-on-surface">Driver</span>
+                <span class="text-xs text-on-surface-variant">I offer rides</span>
+              </div>
+            </label>
+          </div>
+          <select id="role" class="hidden"><option value="rider" selected>Rider</option><option value="driver">Driver</option></select>
+        </div>
+
+        <button type="submit"
+          class="w-full py-3 rounded-xl bg-primary text-on-primary text-sm font-semibold shadow-md hover:bg-primary-container transition-all flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-lg">person_add</span>Create Account
+        </button>
+      </form>
+
+      <div class="mt-6 text-center text-sm text-on-surface-variant">
+        Already have an account?
+        <a href="login.html" class="font-semibold text-primary hover:underline">Sign in</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/ui.js"></script>
+  <script src="../assets/js/pages/register.js"></script>
+</body>
+</html>
