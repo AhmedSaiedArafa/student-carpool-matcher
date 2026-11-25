@@ -1,25 +1,17 @@
-version: "3.8"
-
 services:
   floci:
-    image: localstack/localstack:4.0
+    image: floci/floci:latest
     container_name: floci
+    user: root
     ports:
       - "4566:4566"
     environment:
-      - SERVICES=s3,lambda,apigatewayv2,rds,secretsmanager,logs,events,scheduler,iam
-      - DEBUG=0
-      - LAMBDA_EXECUTOR=docker
+      # Run Lambda containers on the same network so they can reach RDS
       - LAMBDA_DOCKER_NETWORK=floci-net
-      - DOCKER_HOST=unix:///var/run/docker.sock
-      - DEFAULT_REGION=us-east-1
+      - FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK=floci-net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - floci-data:/var/lib/localstack
 
 networks:
   default:
     name: floci-net
-
-volumes:
-  floci-data:

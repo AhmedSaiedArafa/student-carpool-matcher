@@ -41,13 +41,13 @@ Write-Step "Verifying deployment at $API"
 Test-Call "Health check" "GET" "/health" @(200) | Out-Null
 
 $login = Test-Call "Login with seeded driver" "POST" "/auth/login" @(200, 201) `
-    @{ email = "driver1@university.edu"; password = "Password123!" }
+    @{ university_email = "driver1@university.edu"; password = "Password123!" }
 $token = $null
 if ($login) { $token = $login.token; if (-not $token -and $login.data) { $token = $login.data.token } }
 
 Test-Call "Protected endpoint without token -> 401" "GET" "/requests/mine" @(401) | Out-Null
 Test-Call "Invalid login -> 400/401" "POST" "/auth/login" @(400, 401) `
-    @{ email = "driver1@university.edu"; password = "wrong-password" } | Out-Null
+    @{ university_email = "driver1@university.edu"; password = "wrong-password" } | Out-Null
 
 if ($token) {
     Test-Call "Driver dashboard with token" "GET" "/drivers/dashboard" @(200) $null $token | Out-Null
