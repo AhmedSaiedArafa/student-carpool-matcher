@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarpoolMatch - Student Ride Sharing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>tailwind.config={theme:{extend:{colors:{'surface-container-low':'#f2f3ff','secondary':'#006c49','surface-variant':'#dae2fd','surface-container-lowest':'#ffffff','on-secondary':'#ffffff','secondary-container':'#6cf8bb','on-secondary-container':'#00714d','error-container':'#ffdad6','on-error-container':'#93000a','error':'#ba1a1a','on-error':'#ffffff','primary-container':'#2563eb','on-primary-container':'#eeefff','on-primary':'#ffffff','on-surface':'#131b2e','on-surface-variant':'#434655','surface-container':'#eaedff','surface-container-high':'#e2e7ff','surface-container-highest':'#dae2fd','surface':'#faf8ff','primary':'#004ac6','primary-fixed':'#dbe1ff','on-primary-fixed':'#00174b','secondary-fixed':'#6ffbbe','outline':'#737686','outline-variant':'#c3c6d7'},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}</script>
+</head>
+<body class="bg-surface font-sans text-on-surface antialiased">
+  <header class="fixed top-0 w-full z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]" id="app-header"></header>
+
+  <main class="w-full pt-16">
+    <!-- Hero -->
+    <section class="relative w-full overflow-hidden bg-gradient-to-b from-surface-container-low via-surface to-surface pb-12">
+      <div class="absolute -top-24 -left-20 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute top-1/3 -right-24 w-[30rem] h-[30rem] bg-secondary/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="max-w-7xl mx-auto px-6 lg:px-12 pt-12">
+        <div class="inline-flex items-center gap-2 bg-surface-container-lowest shadow-sm px-4 py-1.5 rounded-full text-secondary mb-6">
+          <span class="material-symbols-outlined text-base" style="font-variation-settings:'FILL' 1">school</span>
+          <span class="text-xs font-bold text-on-surface uppercase tracking-wide">Exclusively for University Students</span>
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          <span class="text-xs font-semibold text-secondary">100% Student Verified</span>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end mb-12">
+          <div class="lg:col-span-7">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.08] text-on-surface">
+              Share the ride to campus. Cut traffic, save cash & meet classmates.
+            </h1>
+          </div>
+          <div class="lg:col-span-5 flex flex-col gap-4 pb-2">
+            <p class="text-base text-on-surface-variant leading-relaxed">
+              A peer-to-peer collegiate carpool network. Beat congestion with vetted student drivers traveling your exact campus route.
+            </p>
+            <div class="flex flex-wrap gap-3" id="hero-cta">
+              <a href="/pages/search.html" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-on-primary text-sm font-semibold shadow-md hover:bg-primary-container transition-all">
+                <span class="material-symbols-outlined text-lg">search</span>Find a Ride
+              </a>
+              <a href="/pages/publish-ride.html" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-secondary text-on-secondary text-sm font-semibold shadow-md hover:opacity-95 transition-all">
+                <span class="material-symbols-outlined text-lg">directions_car</span>Offer a Ride
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="w-full bg-surface-container-highest/60 py-10">
+      <div class="max-w-7xl mx-auto px-6 lg:px-12">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-surface-container-lowest rounded-2xl p-5 shadow-sm">
+            <div class="flex items-center gap-2 text-primary mb-1">
+              <span class="material-symbols-outlined text-2xl">verified_user</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Verified Members</span>
+            </div>
+            <span class="text-3xl lg:text-4xl font-bold text-on-surface tracking-tight">500+</span>
+            <p class="text-xs text-on-surface-variant mt-1">Official .edu credentials verified</p>
+          </div>
+          <div class="bg-surface-container-lowest rounded-2xl p-5 shadow-sm">
+            <div class="flex items-center gap-2 text-secondary mb-1">
+              <span class="material-symbols-outlined text-2xl">commute</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Journeys</span>
+            </div>
+            <span class="text-3xl lg:text-4xl font-bold text-on-surface tracking-tight">1,200+</span>
+            <p class="text-xs text-on-surface-variant mt-1">Completed campus trips</p>
+          </div>
+          <div class="bg-surface-container-lowest rounded-2xl p-5 shadow-sm">
+            <div class="flex items-center gap-2 text-primary mb-1">
+              <span class="material-symbols-outlined text-2xl">payments</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Avg Fare</span>
+            </div>
+            <div class="flex items-baseline gap-1">
+              <span class="text-3xl lg:text-4xl font-bold text-on-surface tracking-tight">45</span>
+              <span class="text-lg font-bold text-primary">EGP</span>
+            </div>
+            <p class="text-xs text-on-surface-variant mt-1">Versus 220+ EGP ride-hailing</p>
+          </div>
+          <div class="bg-surface-container-lowest rounded-2xl p-5 shadow-sm">
+            <div class="flex items-center gap-2 text-secondary mb-1">
+              <span class="material-symbols-outlined text-2xl" style="font-variation-settings:'FILL' 1">star</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Trust Score</span>
+            </div>
+            <div class="flex items-baseline gap-1">
+              <span class="text-3xl lg:text-4xl font-bold text-on-surface tracking-tight">4.9</span>
+              <span class="text-lg text-on-surface-variant">/ 5.0</span>
+            </div>
+            <p class="text-xs text-on-surface-variant mt-1">Student peer reviews</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="w-full py-16 bg-surface">
+      <div class="max-w-7xl mx-auto px-6 lg:px-12">
+        <div class="mb-10">
+          <span class="text-xs font-bold text-primary uppercase tracking-wider">Simple 4-Step Process</span>
+          <h2 class="text-2xl lg:text-3xl font-bold text-on-surface mt-1">Built specifically for campus life</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div class="w-12 h-12 rounded-xl bg-primary-fixed text-primary flex items-center justify-center mb-4">
+              <span class="material-symbols-outlined text-2xl">verified</span>
+            </div>
+            <div class="text-xs font-bold text-primary mb-1">STEP 01</div>
+            <h3 class="text-lg font-semibold text-on-surface mb-2">Verify with .edu Email</h3>
+            <p class="text-xs text-on-surface-variant leading-relaxed">Register with your official university email. All users are verified students.</p>
+          </div>
+          <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div class="w-12 h-12 rounded-xl bg-secondary-fixed text-secondary flex items-center justify-center mb-4">
+              <span class="material-symbols-outlined text-2xl">map</span>
+            </div>
+            <div class="text-xs font-bold text-secondary mb-1">STEP 02</div>
+            <h3 class="text-lg font-semibold text-on-surface mb-2">Post or Find Rides</h3>
+            <p class="text-xs text-on-surface-variant leading-relaxed">Drivers publish recurring schedules. Riders search by location, time, and day.</p>
+          </div>
+          <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div class="w-12 h-12 rounded-xl bg-surface-container-high text-on-surface flex items-center justify-center mb-4">
+              <span class="material-symbols-outlined text-2xl">group</span>
+            </div>
+            <div class="text-xs font-bold text-primary mb-1">STEP 03</div>
+            <h3 class="text-lg font-semibold text-on-surface mb-2">Match with Classmates</h3>
+            <p class="text-xs text-on-surface-variant leading-relaxed">Smart matching scores rides by proximity, schedule, and availability.</p>
+          </div>
+          <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div class="w-12 h-12 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center mb-4">
+              <span class="material-symbols-outlined text-2xl">account_balance_wallet</span>
+            </div>
+            <div class="text-xs font-bold text-secondary mb-1">STEP 04</div>
+            <h3 class="text-lg font-semibold text-on-surface mb-2">Rate & Build Trust</h3>
+            <p class="text-xs text-on-surface-variant leading-relaxed">Two-way ratings build a reliable community. Earn badges for consistency.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Banner -->
+    <section class="w-full py-16 bg-primary text-on-primary">
+      <div class="max-w-7xl mx-auto px-6 lg:px-12 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold tracking-tight max-w-3xl mx-auto leading-tight">
+          Ready to take control of your campus commute?
+        </h2>
+        <p class="text-base text-on-primary/80 max-w-xl mx-auto mt-4 mb-8">
+          Sign up in 60 seconds with your university credentials. Start saving money and riding with trusted peers.
+        </p>
+        <div class="flex flex-wrap items-center justify-center gap-4">
+          <a href="/pages/register.html" class="px-8 py-3.5 rounded-xl bg-surface-container-lowest text-primary text-sm font-semibold shadow-lg hover:bg-surface-container transition-all">
+            Create Student Account
+          </a>
+          <a href="/pages/search.html" class="px-6 py-3.5 rounded-xl bg-primary-container text-on-primary text-sm font-semibold hover:opacity-90 transition-all">
+            Browse Live Rides
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="w-full bg-surface-container-low py-8">
+    <div class="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-on-surface-variant">
+      <p>&copy; 2025 CarpoolMatch. Built for University Communities.</p>
+      <div class="flex items-center gap-4">
+        <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-secondary">lock</span>Encrypted IDs</span>
+        <span>Fair Split Standard</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script>
+    if (auth.isLoggedIn()) {
+      const user = auth.getUser();
+      const cta = document.getElementById('hero-cta');
+      if (user.role === 'driver') {
+        cta.innerHTML = '<a href="/pages/dashboard.html" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-on-primary text-sm font-semibold shadow-md"><span class="material-symbols-outlined text-lg">dashboard</span>Go to Dashboard</a>';
+      } else {
+        cta.innerHTML = '<a href="/pages/search.html" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-on-primary text-sm font-semibold shadow-md"><span class="material-symbols-outlined text-lg">search</span>Find a Ride</a>';
+      }
+    }
+  </script>
+</body>
+</html>
