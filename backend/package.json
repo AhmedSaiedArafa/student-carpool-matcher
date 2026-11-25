@@ -8,14 +8,20 @@
     "dev": "node --watch server.js",
     "migrate": "node src/db/migrate.js",
     "seed": "node src/db/seed.js",
-    "test": "node --test tests/**/*.test.js"
+    "test": "node --test tests/**/*.test.js",
+    "zip": "bestzip lambda.zip lambda.js package.json src api node_modules"
   },
   "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.1177.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.13.0"
+    "pg": "^8.13.0",
+    "serverless-http": "^4.0.0"
+  },
+  "devDependencies": {
+    "bestzip": "^4.0.4"
   }
 }
