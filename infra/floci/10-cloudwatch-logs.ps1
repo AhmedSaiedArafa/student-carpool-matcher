@@ -6,18 +6,22 @@
 . "$PSScriptRoot\_settings.ps1"
 
 Write-Step "10. Configuring CloudWatch Logs"
-try {
-    aws logs create-log-group --log-group-name $LOG_GROUP 2>$null | Out-Null
+$groups = Get-AwsJson logs describe-log-groups --log-group-name-prefix $LOG_GROUP
+$exists = $groups -and (@($groups.logGroups | Where-Object { $_.logGroupName -eq $LOG_GROUP }).Count -gt 0)
+
+if ($exists) {
+    Write-Host "Log group '$LOG_GROUP' already exists."
+} else {
+    aws logs create-log-group --log-group-name $LOG_GROUP | Out-Null
+    Assert-AwsOk "Creating log group"
     Write-Host "Log group '$LOG_GROUP' created."
-} catch {
-    Write-Host "Log group '$LOG_GROUP' already exists, continuing."
 }
 
-try {
-    aws logs put-retention-policy --log-group-name $LOG_GROUP --retention-in-days 7 2>$null | Out-Null
+aws logs put-retention-policy --log-group-name $LOG_GROUP --retention-in-days 7 | Out-Null
+if ($LASTEXITCODE -eq 0) {
     Write-Host "Log retention set to 7 days." -ForegroundColor Green
-} catch {
-    Write-Host "Retention policy skipped: $_" -ForegroundColor Yellow
+} else {
+    Write-Host "Retention policy skipped: $($script:AwsLastError.Trim())" -ForegroundColor Yellow
 }
 
 Write-Host "View logs any time with: .\infra\floci\logs.ps1"

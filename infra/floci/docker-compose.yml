@@ -1,0 +1,17 @@
+services:
+  floci:
+    image: floci/floci:latest
+    container_name: floci
+    user: root
+    ports:
+      - "4566:4566"
+    environment:
+      # Run Lambda containers on the same network so they can reach RDS
+      - LAMBDA_DOCKER_NETWORK=floci-net
+      - FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK=floci-net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+networks:
+  default:
+    name: floci-net
