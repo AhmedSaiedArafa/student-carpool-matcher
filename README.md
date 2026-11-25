@@ -10,24 +10,38 @@ Cloud-based ride-sharing platform for university students. Drivers publish recur
 
 ## Tech Stack
 
-- **Frontend:** HTML, CSS, vanilla JavaScript → Cloudflare Pages
-- **Backend:** Node.js + Express REST API (modular monolith) → AWS Lambda + API Gateway (via Floci)
-- **Database:** Neon PostgreSQL with parameterized SQL and transactions
-- **Auth:** bcrypt password hashing + JWT tokens
-- **Geo:** OpenRouteService for geocoding (with coordinate fallback)
+- **Frontend:** HTML, CSS, vanilla JavaScript, Leaflet + OpenStreetMap → hosted as an **S3 static website**
+- **Backend:** Node.js + Express REST API (modular monolith: auth, rides, matching, history) → **AWS Lambda** (nodejs24.x) behind **API Gateway v2 HTTP API**
+- **Database:** **Amazon RDS PostgreSQL 16** with parameterized SQL and transactions
+- **Secrets:** **AWS Secrets Manager** (`carpool/config` holds `DATABASE_URL` and `JWT_SECRET`, loaded by the Lambda on cold start)
+- **Security:** least-privilege **IAM** role `carpool-lambda-role`, bcrypt password hashing, JWT tokens
+- **Monitoring:** **CloudWatch Logs** (`/aws/lambda/carpool-api`)
+- **Geo:** backend `/api/geocode` uses OpenRouteService when `ORS_API_KEY` is set, otherwise Nominatim (OpenStreetMap), limited to Egypt
+- **Cloud environment:** all AWS services run on **Floci**, a local AWS emulator (`localhost:4566`), as in Lab 7
+
+## Live URLs (Floci)
+
+| What | URL |
+|---|---|
+| Website | http://carpool-frontend.s3-website.localhost.localstack.cloud:4566 |
+| API | http://f1a3e18c52.execute-api.localhost.floci.io:4566/api |
+| Health check | http://f1a3e18c52.execute-api.localhost.floci.io:4566/api/health |
+| Floci Dash | http://localhost:4566/_floci/ui |
+
+> The API id (`f1a3e18c52`) is created on first deploy and may differ on another machine; `deploy-frontend.sh` prints the current one.
 
 ## Setup
 
 ### Prerequisites
 
 - Node.js 18+
-- PostgreSQL (or Neon account)
+- PostgreSQL 14+ (local) for running without Floci
 - OpenRouteService API key (optional)
 
 ### 1. Clone and install
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/AhmedSaiedArafa/student-carpool-matcher.git
 cd student-carpool-matcher
 cd backend
 npm install
@@ -87,29 +101,38 @@ Tests require a running database. They cover the full integration path: register
 
 ## Deploy (Floci / Local AWS)
 
-The entire stack deploys locally using **Floci** (LocalStack), emulating S3, Lambda, API Gateway, RDS, Secrets Manager, and CloudWatch on `localhost:4566`.
+The whole stack is deployed to **Floci**, which emulates S3, Lambda, API Gateway, RDS, Secrets Manager, IAM and CloudWatch on `localhost:4566`.
 
 ### Prerequisites
 
 - Docker Desktop (running)
-- AWS CLI v2
+- AWS CLI v2 with a `floci` profile (the scripts create it if missing)
+- Git Bash (Windows) or any bash shell
 - Node.js 20+
 
-### Deploy everything
+### Deploy
 
-```powershell
-.\infra\floci\deploy.ps1
+Run from the project folder in Git Bash:
+
+```bash
+export AWS_PROFILE=floci
+export MSYS_NO_PATHCONV=1          # Git Bash only: stops path conversion of /aws/... names
+docker compose -f infra/floci/docker-compose.yml up -d   # start Floci
+bash infra/floci/deploy-backend.sh   # RDS, secret, IAM role + policy, Lambda, migrations, seed
+bash infra/floci/deploy-frontend.sh  # API Gateway HTTP API + S3 website
+bash infra/floci/test-events.sh      # 7 Lambda test events
+bash infra/floci/report-tests.sh     # 53 API tests through API Gateway -> out/report-tests.md
 ```
 
-This provisions RDS PostgreSQL, stores secrets, builds and deploys the Lambda, sets up API Gateway with CORS, hosts the frontend on S3, runs migrations and seed, and creates an EventBridge scheduler for expiry cleanup.
+`deploy-backend.sh` re-seeds the database, so log out and log in again after each backend deploy.
 
-### Tear down everything
+The PowerShell scripts in `infra/floci/*.ps1` are an older alternative; the bash scripts above are the ones used for the final deployment.
 
-```powershell
-.\infra\floci\destroy.ps1
+### Logs
+
+```bash
+aws logs tail /aws/lambda/carpool-api --since 10m
 ```
-
-See [infra/floci/README.md](infra/floci/README.md) for full details, URLs, and architecture diagram.
 
 ## API Endpoints
 
@@ -144,6 +167,10 @@ See [infra/floci/README.md](infra/floci/README.md) for full details, URLs, and a
 | GET | /api/notifications | Notifications | Auth |
 | PATCH | /api/notifications/:id/read | Mark read | Auth |
 | PATCH | /api/notifications/read-all | Mark all read | Auth |
+| GET | /api/geocode?q= | Place search (external API) | Public |
+| GET | /api/geocode/reverse | Coordinates → address | Public |
+| GET | /api/stats | Home page statistics | Public |
+| GET | /api/health | Health check | Public |
 
 ## Assumptions
 
@@ -151,17 +178,19 @@ See [infra/floci/README.md](infra/floci/README.md) for full details, URLs, and a
 2. **Trip instances**: When a ride template is created, 4 weeks of trip instances are auto-generated. In production, a cron job would generate new instances weekly.
 3. **Waitlist offer window**: 30 minutes to accept a freed seat before it's offered to the next person.
 4. **Stale request expiry**: Pending requests auto-expire after 48 hours (would need a cron job in production).
-5. **Coordinates**: The search uses latitude/longitude directly. In production, the OpenRouteService geocoder converts addresses to coordinates.
+5. **Coordinates**: The search uses latitude/longitude. Place names are converted to coordinates by the backend geocoder (OpenRouteService or Nominatim), limited to Egypt.
 6. **No real email sending**: Email verification flow exists in the API but no email provider is integrated.
 7. **Cloudflare Turnstile**: Not implemented — marked as optional in the spec.
-8. **docs/design/**: Directory preserved but was empty; frontend was designed from scratch following the specified structure.
+8. **Demo secret**: the JWT secret in `deploy-backend.sh` is a demo value for the local emulator only; a real deployment would generate it and keep it only in Secrets Manager.
 
 ## Project Structure
 
 ```
 ├── README.md
 ├── .gitignore
-├── docs/design/
+├── infra/
+│   ├── floci/   (deploy, test and Lab scripts)
+│   └── iam/     (trust policy + least-privilege policy)
 ├── backend/
 │   ├── package.json
 │   ├── .env.example
@@ -177,7 +206,7 @@ See [infra/floci/README.md](infra/floci/README.md) for full details, URLs, and a
 │       │   ├── index.js
 │       │   ├── migrate.js
 │       │   ├── seed.js
-│       │   └── migrations/001_init.sql
+│       │   └── migrations/001_init.sql, 002_offered_fare.sql, 003_ride_schedule.sql
 │       ├── middleware/
 │       │   ├── auth.js
 │       │   ├── validate.js
@@ -223,7 +252,6 @@ See [infra/floci/README.md](infra/floci/README.md) for full details, URLs, and a
     │   ├── my-requests.html
     │   ├── trip-detail.html
     │   ├── history.html
-    │   ├── rate.html
     │   ├── profile.html
     │   └── notifications.html
     └── assets/
@@ -237,6 +265,7 @@ See [infra/floci/README.md](infra/floci/README.md) for full details, URLs, and a
             ├── api.js
             ├── auth.js
             ├── ui.js
+            ├── location-picker.js
             └── pages/
                 ├── login.js
                 ├── register.js
@@ -247,7 +276,6 @@ See [infra/floci/README.md](infra/floci/README.md) for full details, URLs, and a
                 ├── my-requests.js
                 ├── trip-detail.js
                 ├── history.js
-                ├── rate.js
                 ├── profile.js
                 └── notifications.js
 ```
