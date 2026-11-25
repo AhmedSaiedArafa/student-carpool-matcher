@@ -1,0 +1,9 @@
+{
+  "name": "carpool-frontend",
+  "version": "1.0.0",
+  "description": "Student Carpool Matcher Frontend",
+  "scripts": {
+    "dev": "npx serve -l 5500",
+    "start": "npx serve -l 5500"
+  }
+}
