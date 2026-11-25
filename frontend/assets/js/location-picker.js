@@ -131,39 +131,18 @@ function searchLocation(query, resultsId, callback) {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(async () => {
     try {
-      const base = 'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&accept-language=en,ar&limit=6';
-      const cleaned = query.replace(/\b(the|in|of|at|and|for|a|an)\b/gi, '').replace(/\s+/g, ' ').trim();
-      const queries = [query];
-      if (queries[0] !== query + ' Egypt') queries.push(query + ' Egypt');
-      if (cleaned && cleaned !== query.trim()) {
-        queries.push(cleaned + ' Egypt');
-        queries.push(cleaned);
-      }
-      let data = [];
-      for (const q of queries) {
-        if (!q || q.trim().length < 2) continue;
-        const encoded = encodeURIComponent(q);
-        const viewbox = '&viewbox=30.7,30.3,31.7,29.7';
-        const url = queries.indexOf(q) === 0
-          ? `${base}&q=${encoded}${viewbox}&bounded=1`
-          : `${base}&q=${encoded}${viewbox}&bounded=0`;
-        try {
-          const res = await fetch(url);
-          if (!res.ok) continue;
-          data = await res.json();
-          if (data.length > 0) break;
-        } catch { continue; }
-      }
+      const data = await api.get(`/geocode?q=${encodeURIComponent(query)}`);
       const container = document.getElementById(resultsId);
-      if (data.length === 0) {
+      if (!data || data.length === 0) {
         container.innerHTML = '<div class="px-4 py-3 text-sm text-on-surface-variant">No results found</div>';
         container.classList.remove('hidden');
         return;
       }
       window._searchResults = data;
       container.innerHTML = data.map((item, i) => {
-        const shortName = item.display_name.split(',').slice(0, 2).join(',').trim();
-        const detail = item.display_name.split(',').slice(2, 4).join(',').trim();
+        const parts = item.name.split(',');
+        const shortName = parts.slice(0, 2).join(',').trim();
+        const detail = parts.slice(2, 4).join(',').trim();
         return `<button type="button" class="w-full text-left px-4 py-2.5 hover:bg-surface-container-low transition-colors flex items-start gap-2 border-b border-outline-variant/30 last:border-0"
           onclick="pickSearchResult(${i}, '${callback}')">
           <span class="material-symbols-outlined text-lg text-on-surface-variant mt-0.5 shrink-0">location_on</span>
@@ -174,31 +153,26 @@ function searchLocation(query, resultsId, callback) {
         </button>`;
       }).join('');
       container.classList.remove('hidden');
-    } catch {}
+    } catch {
+      console.warn('Location search failed');
+    }
   }, 400);
 }
 
 function pickSearchResult(index, callbackName) {
   const item = window._searchResults[index];
   if (!item) return;
-  const name = item.display_name.split(',').slice(0, 2).join(',').trim();
-  window[callbackName](parseFloat(item.lat), parseFloat(item.lon), name);
+  const name = item.name.split(',').slice(0, 2).join(',').trim();
+  window[callbackName](item.lat, item.lng, name);
 }
 
 function reverseGeocode(lat, lng, callback) {
-  fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&accept-language=en,ar`)
-    .then(r => r.json())
-    .then(data => {
-      if (data.display_name) {
-        callback(data.display_name.split(',').slice(0, 3).join(',').trim());
-      } else if (data.address) {
-        const parts = [data.address.road, data.address.suburb, data.address.city].filter(Boolean);
-        callback(parts.length ? parts.join(', ') : null);
-      } else {
-        callback(null);
-      }
-    })
-    .catch(() => callback(null));
+  api.get(`/geocode/reverse?lat=${lat}&lng=${lng}`)
+    .then(data => callback(data?.name || null))
+    .catch(() => {
+      console.warn('Reverse geocoding failed');
+      callback(null);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

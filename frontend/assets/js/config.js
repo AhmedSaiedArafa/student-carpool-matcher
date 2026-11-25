@@ -3,6 +3,21 @@ const CONFIG = {
     ? 'http://localhost:3000/api'
     : `http://${window.location.hostname}:3000/api`,
   WEEKDAYS: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+  scheduleLabel(item) {
+    if (item.schedule_type === 'once') {
+      const d = item.trip_date || item.start_date;
+      if (!d) return 'One time';
+      const dt = new Date(String(d).slice(0, 10) + 'T00:00:00');
+      return 'One time · ' + dt.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+    }
+    const days = (item.weekdays || [item.weekday]).sort().map(w => CONFIG.WEEKDAYS[w].slice(0, 3));
+    const label = days.length > 0 ? 'Every ' + days.join(' & ') : '';
+    if (item.end_date) {
+      const ed = new Date(String(item.end_date).slice(0, 10) + 'T00:00:00');
+      return label + ' · until ' + ed.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    }
+    return label;
+  },
 };
 
 const TW_CONFIG = {

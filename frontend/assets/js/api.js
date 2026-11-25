@@ -10,7 +10,15 @@ const api = {
 
     const res = await fetch(`${CONFIG.API_URL}${path}`, opts);
     const data = res.status === 204 ? null : await res.json();
-    if (!res.ok) throw { status: res.status, ...(data?.error || { message: 'Request failed' }) };
+    if (!res.ok) {
+      if (res.status === 401 && !path.startsWith('/auth/login')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/pages/login.html';
+        return;
+      }
+      throw { status: res.status, ...(data?.error || { message: 'Request failed' }) };
+    }
     return data?.data ?? data;
   },
 

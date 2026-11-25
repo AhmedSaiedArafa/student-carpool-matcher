@@ -35,13 +35,13 @@ try {
     Write-Host "  Log group deleted."
 } catch { Write-Host "  Log group not found, skipping." }
 
-Write-Host "Removing IAM role..."
-try {
-    aws iam detach-role-policy --role-name $ROLE_NAME `
-        --policy-arn "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole" 2>$null | Out-Null
-    aws iam delete-role --role-name $ROLE_NAME 2>$null | Out-Null
-    Write-Host "  IAM role deleted."
-} catch { Write-Host "  IAM role not found, skipping." }
+Write-Host "Removing IAM role and policy..."
+aws iam detach-role-policy --role-name $ROLE_NAME --policy-arn $POLICY_ARN | Out-Null
+aws iam detach-role-policy --role-name $ROLE_NAME `
+    --policy-arn "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole" | Out-Null
+aws iam delete-policy --policy-arn $POLICY_ARN | Out-Null
+aws iam delete-role --role-name $ROLE_NAME | Out-Null
+Write-Host "  IAM role and policy removed (or were not there)."
 
 Write-Host "Removing S3 bucket..."
 try {

@@ -33,6 +33,7 @@ function renderRequests(requests) {
         <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-sm">calendar_today</span>${ui.formatDate(r.trip_date)}</span>
         <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-sm">person</span>${ui.escape(r.driver_name)}</span>
         ${r.fare ? `<span class="inline-flex items-center gap-1 font-semibold text-secondary"><span class="material-symbols-outlined text-sm">payments</span>${r.fare} EGP</span>` : ''}
+        ${r.offered_fare != null ? `<span class="inline-flex items-center gap-1 font-semibold text-primary"><span class="material-symbols-outlined text-sm">sell</span>Your offer: ${parseFloat(r.offered_fare).toFixed(2)} EGP</span>` : ''}
       </div>
       <div class="flex flex-wrap gap-2">
         ${['pending', 'approved'].includes(r.status)

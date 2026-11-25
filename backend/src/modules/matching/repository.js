@@ -16,7 +16,7 @@ async function findAvailableTrips(filters) {
     i++;
   }
   if (filters.weekday !== undefined) {
-    conditions.push(`rt.weekday = $${i}`);
+    conditions.push(`EXTRACT(DOW FROM ti.trip_date)::int = $${i}`);
     params.push(filters.weekday);
     i++;
   }
@@ -25,7 +25,8 @@ async function findAvailableTrips(filters) {
     `SELECT ti.*, rt.driver_id, rt.origin_lat, rt.origin_lng, rt.origin_name,
             rt.destination_lat, rt.destination_lng, rt.destination_name,
             rt.weekday, rt.departure_time, rt.seats_total, rt.fare,
-            rt.pickup_area_radius_km, rt.stops, u.name as driver_name
+            rt.pickup_area_radius_km, rt.stops, rt.schedule_type, rt.weekdays,
+            u.name as driver_name
      FROM trip_instances ti
      JOIN ride_templates rt ON ti.ride_template_id = rt.id
      JOIN users u ON rt.driver_id = u.id
@@ -36,12 +37,24 @@ async function findAvailableTrips(filters) {
   return rows;
 }
 
-async function createRequest(tripId, riderId, pickupLat, pickupLng) {
+async function createRequest(tripId, riderId, pickupLat, pickupLng, offeredFare) {
   const { rows } = await query(
-    `INSERT INTO join_requests (trip_id, rider_id, pickup_lat, pickup_lng) VALUES ($1, $2, $3, $4) RETURNING *`,
-    [tripId, riderId, pickupLat || null, pickupLng || null]
+    `INSERT INTO join_requests (trip_id, rider_id, pickup_lat, pickup_lng, offered_fare) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    [tripId, riderId, pickupLat || null, pickupLng || null, offeredFare != null ? offeredFare : null]
   );
   return rows[0];
+}
+
+async function reactivateRequest(tripId, riderId, pickupLat, pickupLng, offeredFare) {
+  const { rows } = await query(
+    `UPDATE join_requests
+     SET status = 'pending', offered_fare = $3, pickup_lat = $4, pickup_lng = $5,
+         requested_at = NOW(), decided_at = NULL
+     WHERE trip_id = $1 AND rider_id = $2 AND status IN ('withdrawn', 'rejected', 'cancelled')
+     RETURNING *`,
+    [tripId, riderId, offeredFare != null ? offeredFare : null, pickupLat || null, pickupLng || null]
+  );
+  return rows[0] || null;
 }
 
 async function findRequestByTripAndRider(tripId, riderId) {
@@ -82,7 +95,7 @@ async function cancelApprovedRequest(id) {
 
 async function getMyRequests(riderId) {
   const { rows } = await query(
-    `SELECT jr.*, ti.trip_date, ti.departure_at, ti.status as trip_status,
+    `SELECT jr.*, jr.offered_fare, ti.trip_date, ti.departure_at, ti.status as trip_status,
             rt.origin_name, rt.destination_name, rt.fare, u.name as driver_name
      FROM join_requests jr
      JOIN trip_instances ti ON jr.trip_id = ti.id
@@ -181,7 +194,7 @@ async function expireStaleOffers() {
 }
 
 module.exports = {
-  findAvailableTrips, createRequest, findRequestByTripAndRider, findRequestById,
+  findAvailableTrips, createRequest, reactivateRequest, findRequestByTripAndRider, findRequestById,
   withdrawRequest, cancelApprovedRequest, getMyRequests,
   joinWaitlist, findWaitlistEntry, findWaitlistById, leaveWaitlist,
   offerSeatToNext, acceptWaitlistOffer,

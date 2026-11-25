@@ -92,15 +92,17 @@ function renderResults(matches) {
       </div>
       <div class="flex flex-wrap items-center gap-3 text-xs text-on-surface-variant mb-3">
         <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-sm">calendar_today</span>${ui.formatDate(m.trip_date)}</span>
+        <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-sm">${m.schedule_type === 'once' ? 'event' : 'repeat'}</span>${CONFIG.scheduleLabel(m)}</span>
         <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-sm">schedule</span>${ui.formatTime(m.departure_time)}</span>
         <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-sm">event_seat</span>${m.seats_remaining}/${m.seats_total} seats</span>
         <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-sm">person</span>${ui.escape(m.driver_name)}</span>
+        <span class="inline-flex items-center gap-1 font-semibold text-amber-500"><span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1">star</span>Driver ${m.driver_rating}★</span>
         ${m.fare ? `<span class="inline-flex items-center gap-1 font-semibold text-secondary"><span class="material-symbols-outlined text-sm">payments</span>${m.fare} EGP</span>` : ''}
         <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-sm">near_me</span>${m.pickupDist} km away</span>
       </div>
       <div class="flex flex-wrap gap-2">
         ${m.seats_remaining > 0
-          ? `<button class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-on-primary text-xs font-semibold shadow-sm hover:bg-primary-container transition-all" onclick="requestSeat(${m.id})">
+          ? `<button class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-on-primary text-xs font-semibold shadow-sm hover:bg-primary-container transition-all" onclick="openFareModal(${m.id}, ${m.fare || 0})">
               <span class="material-symbols-outlined text-sm">airline_seat_recline_normal</span>Request Seat</button>`
           : `<button class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-container-high text-on-surface-variant text-xs font-semibold hover:bg-surface-container-highest transition-all" onclick="joinWaitlist(${m.id})">
               <span class="material-symbols-outlined text-sm">hourglass_top</span>Join Waitlist</button>`}
@@ -111,17 +113,48 @@ function renderResults(matches) {
   `).join('')}</div>`;
 }
 
-async function requestSeat(tripId) {
-  try {
-    await api.post(`/trips/${tripId}/requests`, {
-      pickup_lat: parseFloat(document.getElementById('pickupLat').value),
-      pickup_lng: parseFloat(document.getElementById('pickupLng').value),
-    });
-    ui.toast('Seat requested! The driver will review your request.');
-    document.getElementById('search-form').dispatchEvent(new Event('submit'));
-  } catch (err) {
-    ui.toast(err.message || 'Failed to request seat', 'error');
-  }
+function openFareModal(tripId, defaultFare) {
+  const existing = document.getElementById('fare-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'fare-modal';
+  modal.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-on-surface/40';
+  modal.innerHTML = `
+    <div class="bg-surface-container-lowest rounded-2xl shadow-lg p-6 w-full max-w-sm mx-4">
+      <h3 class="text-base font-bold text-on-surface mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary">payments</span>Your Price (EGP)
+      </h3>
+      <input type="number" id="fare-input" min="0" max="9999.99" step="0.01" value="${defaultFare}"
+        class="w-full px-3 py-2.5 rounded-xl border border-outline-variant bg-surface text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all mb-4">
+      <div class="flex justify-end gap-2">
+        <button id="fare-cancel" class="px-4 py-2 rounded-xl text-sm font-semibold text-on-surface-variant hover:bg-surface-container-low transition-all">Cancel</button>
+        <button id="fare-submit" class="px-4 py-2 rounded-xl bg-primary text-on-primary text-sm font-semibold shadow-sm hover:bg-primary-container transition-all">Send Request</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+  document.getElementById('fare-cancel').addEventListener('click', () => modal.remove());
+  document.getElementById('fare-submit').addEventListener('click', async () => {
+    const offeredFare = parseFloat(document.getElementById('fare-input').value);
+    if (isNaN(offeredFare) || offeredFare < 0) {
+      ui.toast('Please enter a valid price', 'error');
+      return;
+    }
+    modal.remove();
+    try {
+      await api.post(`/trips/${tripId}/requests`, {
+        pickup_lat: parseFloat(document.getElementById('pickupLat').value),
+        pickup_lng: parseFloat(document.getElementById('pickupLng').value),
+        offered_fare: offeredFare,
+      });
+      ui.toast('Seat requested! The driver will review your request.');
+      document.getElementById('search-form').dispatchEvent(new Event('submit'));
+    } catch (err) {
+      ui.toast(err.message || 'Failed to request seat', 'error');
+    }
+  });
 }
 
 async function joinWaitlist(tripId) {

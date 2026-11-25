@@ -2,12 +2,14 @@ const { query, transaction } = require('../../db');
 
 async function createTemplate(data) {
   const { rows } = await query(
-    `INSERT INTO ride_templates (driver_id, origin_lat, origin_lng, origin_name, destination_lat, destination_lng, destination_name, weekday, departure_time, seats_total, fare, pickup_area_radius_km, stops)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+    `INSERT INTO ride_templates (driver_id, origin_lat, origin_lng, origin_name, destination_lat, destination_lng, destination_name, weekday, departure_time, seats_total, fare, pickup_area_radius_km, stops, schedule_type, weekdays, start_date, end_date)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING *`,
     [data.driver_id, data.origin_lat, data.origin_lng, data.origin_name || null,
      data.destination_lat, data.destination_lng, data.destination_name || null,
      data.weekday, data.departure_time, data.seats_total, data.fare || null,
-     data.pickup_area_radius_km || 2.0, JSON.stringify(data.stops || [])]
+     data.pickup_area_radius_km || 2.0, JSON.stringify(data.stops || []),
+     data.schedule_type || 'weekly', data.weekdays || [data.weekday],
+     data.start_date || null, data.end_date || null]
   );
   return rows[0];
 }
@@ -56,7 +58,8 @@ async function findTripById(id) {
     `SELECT ti.*, rt.driver_id, rt.origin_lat, rt.origin_lng, rt.origin_name,
             rt.destination_lat, rt.destination_lng, rt.destination_name,
             rt.weekday, rt.departure_time, rt.seats_total, rt.fare,
-            rt.pickup_area_radius_km, rt.stops, u.name as driver_name
+            rt.pickup_area_radius_km, rt.stops, rt.schedule_type, rt.weekdays,
+            rt.start_date, rt.end_date, u.name as driver_name
      FROM trip_instances ti
      JOIN ride_templates rt ON ti.ride_template_id = rt.id
      JOIN users u ON rt.driver_id = u.id
@@ -84,8 +87,11 @@ async function updateTripStatus(id, status) {
 
 async function findRequestsByTrip(tripId) {
   const { rows } = await query(
-    `SELECT jr.*, u.name as rider_name, u.university_email
-     FROM join_requests jr JOIN users u ON jr.rider_id = u.id
+    `SELECT jr.*, jr.offered_fare, rt.fare, u.name as rider_name, u.university_email
+     FROM join_requests jr
+     JOIN users u ON jr.rider_id = u.id
+     JOIN trip_instances ti ON jr.trip_id = ti.id
+     JOIN ride_templates rt ON ti.ride_template_id = rt.id
      WHERE jr.trip_id = $1 ORDER BY jr.requested_at`,
     [tripId]
   );
@@ -94,8 +100,11 @@ async function findRequestsByTrip(tripId) {
 
 async function findApprovedPassengers(tripId) {
   const { rows } = await query(
-    `SELECT jr.*, u.name as rider_name, u.university_email
-     FROM join_requests jr JOIN users u ON jr.rider_id = u.id
+    `SELECT jr.*, jr.offered_fare, rt.fare, u.name as rider_name, u.university_email
+     FROM join_requests jr
+     JOIN users u ON jr.rider_id = u.id
+     JOIN trip_instances ti ON jr.trip_id = ti.id
+     JOIN ride_templates rt ON ti.ride_template_id = rt.id
      WHERE jr.trip_id = $1 AND jr.status = 'approved'`,
     [tripId]
   );
@@ -114,10 +123,24 @@ async function findRequestById(id) {
   return rows[0] || null;
 }
 
+async function findRequestByIdForUpdate(id, client) {
+  const q = client.query.bind(client);
+  const { rows } = await q(
+    `SELECT jr.*, ti.ride_template_id, ti.status AS trip_status, rt.driver_id, rt.origin_name, rt.destination_name
+     FROM join_requests jr
+     JOIN trip_instances ti ON jr.trip_id = ti.id
+     JOIN ride_templates rt ON ti.ride_template_id = rt.id
+     WHERE jr.id = $1
+     FOR UPDATE OF jr`,
+    [id]
+  );
+  return rows[0] || null;
+}
+
 async function decideRequest(requestId, status, client) {
   const q = client ? client.query.bind(client) : query;
   const { rows } = await q(
-    `UPDATE join_requests SET status = $1, decided_at = NOW() WHERE id = $2 RETURNING *`,
+    `UPDATE join_requests SET status = $1, decided_at = NOW() WHERE id = $2 AND status = 'pending' RETURNING *`,
     [status, requestId]
   );
   return rows[0] || null;
@@ -144,9 +167,33 @@ async function incrementSeats(tripId, client) {
   return rows[0] || null;
 }
 
+async function countApprovedRidersForFutureTrips(templateId) {
+  const { rows } = await query(
+    `SELECT COUNT(*) as cnt FROM join_requests jr
+     JOIN trip_instances ti ON jr.trip_id = ti.id
+     WHERE ti.ride_template_id = $1 AND ti.trip_date >= CURRENT_DATE
+       AND ti.status = 'scheduled' AND jr.status = 'approved'`,
+    [templateId]
+  );
+  return parseInt(rows[0].cnt);
+}
+
+async function deleteFutureTripsWithoutPassengers(templateId, removedWeekdays) {
+  const { rows } = await query(
+    `DELETE FROM trip_instances
+     WHERE ride_template_id = $1 AND trip_date >= CURRENT_DATE AND status = 'scheduled'
+       AND EXTRACT(DOW FROM trip_date)::int = ANY($2)
+       AND id NOT IN (SELECT trip_id FROM join_requests WHERE status IN ('pending', 'approved'))
+     RETURNING id`,
+    [templateId, removedWeekdays]
+  );
+  return rows;
+}
+
 async function getDriverDashboard(driverId) {
   const { rows: upcoming } = await query(
-    `SELECT ti.*, rt.origin_name, rt.destination_name, rt.seats_total, rt.departure_time
+    `SELECT ti.*, rt.origin_name, rt.destination_name, rt.seats_total, rt.departure_time,
+            rt.schedule_type, rt.weekdays
      FROM trip_instances ti
      JOIN ride_templates rt ON ti.ride_template_id = rt.id
      WHERE rt.driver_id = $1 AND ti.status = 'scheduled' AND ti.trip_date >= CURRENT_DATE
@@ -154,7 +201,7 @@ async function getDriverDashboard(driverId) {
     [driverId]
   );
   const { rows: pending } = await query(
-    `SELECT jr.*, ti.trip_date, u.name as rider_name, rt.origin_name, rt.destination_name
+    `SELECT jr.*, jr.offered_fare, rt.fare, ti.trip_date, u.name as rider_name, rt.origin_name, rt.destination_name
      FROM join_requests jr
      JOIN trip_instances ti ON jr.trip_id = ti.id
      JOIN ride_templates rt ON ti.ride_template_id = rt.id
@@ -179,7 +226,8 @@ async function cancelTripRequests(tripId, client) {
 module.exports = {
   createTemplate, findTemplateById, findTemplatesByDriver, updateTemplate,
   createTripInstance, findTripById, findTripsByTemplate, updateTripStatus,
-  findRequestsByTrip, findApprovedPassengers, findRequestById,
+  findRequestsByTrip, findApprovedPassengers, findRequestById, findRequestByIdForUpdate,
   decideRequest, decrementSeats, incrementSeats,
   getDriverDashboard, cancelTripRequests,
+  countApprovedRidersForFutureTrips, deleteFutureTripsWithoutPassengers,
 };

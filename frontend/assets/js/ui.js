@@ -155,20 +155,120 @@ const ui = {
         ${userArea}
       </div>`;
 
-    if (user) loadNotificationCount();
+    if (user) initLiveNotifications();
   },
 };
 
-async function loadNotificationCount() {
-  try {
-    const notifications = await api.get('/notifications?unread=true');
+function initLiveNotifications() {
+  const user = auth.getUser();
+  if (!user) return;
+
+  const storageKey = `notif_shown_${user.id}`;
+  let pollTimer = null;
+
+  function getShownIds() {
+    try { return JSON.parse(localStorage.getItem(storageKey)) || []; } catch { return []; }
+  }
+
+  function saveShownIds(ids) {
+    const trimmed = ids.slice(-200);
+    localStorage.setItem(storageKey, JSON.stringify(trimmed));
+  }
+
+  function updateBadge(count) {
     const badge = document.getElementById('notif-count');
-    if (badge && notifications.length > 0) {
-      badge.textContent = notifications.length;
+    if (!badge) return;
+    if (count > 0) {
+      badge.textContent = count > 9 ? '9+' : count;
       badge.classList.remove('hidden');
       badge.classList.add('flex');
+    } else {
+      badge.classList.add('hidden');
+      badge.classList.remove('flex');
     }
-  } catch {}
+  }
+
+  function notifUrl(n) {
+    if (user.role === 'driver' && n.trip_id) return `/pages/trip-detail.html?id=${n.trip_id}`;
+    return '/pages/my-requests.html';
+  }
+
+  function showPopup(n) {
+    const card = document.createElement('div');
+    card.className = 'fixed top-4 right-4 z-[100] max-w-sm w-full bg-surface-container text-on-surface rounded-2xl shadow-lg p-4 cursor-pointer transition-all duration-300';
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(100%)';
+    card.innerHTML = `<div class="flex items-start gap-3">
+      <span class="material-symbols-outlined text-primary text-xl mt-0.5">notifications</span>
+      <p class="text-sm font-medium flex-1">${ui.escape(n.message)}</p>
+      <button class="text-on-surface-variant hover:text-on-surface" data-dismiss>
+        <span class="material-symbols-outlined text-lg">close</span>
+      </button>
+    </div>`;
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('[data-dismiss]')) { removeCard(); return; }
+      window.location.href = notifUrl(n);
+    });
+    document.body.appendChild(card);
+    requestAnimationFrame(() => { card.style.opacity = '1'; card.style.transform = 'translateX(0)'; });
+    function removeCard() {
+      card.style.opacity = '0';
+      card.style.transform = 'translateX(100%)';
+      setTimeout(() => card.remove(), 300);
+    }
+    setTimeout(removeCard, 7000);
+  }
+
+  function showBrowserNotification(n) {
+    if (Notification.permission !== 'granted') return;
+    const sysNotif = new Notification('CarpoolMatch', { body: n.message, icon: '/favicon.ico' });
+    sysNotif.onclick = () => { window.focus(); window.location.href = notifUrl(n); };
+  }
+
+  let isFirstPoll = true;
+
+  async function poll() {
+    try {
+      const notifications = await api.get('/notifications?unread=true');
+      updateBadge(notifications.length);
+
+      const shownIds = getShownIds();
+      const newOnes = notifications.filter(n => !shownIds.includes(n.id));
+
+      if (newOnes.length > 0) {
+        const toShow = isFirstPoll ? newOnes.slice(0, 3) : newOnes;
+        toShow.forEach(n => {
+          showPopup(n);
+          showBrowserNotification(n);
+        });
+        saveShownIds([...shownIds, ...newOnes.map(n => n.id)]);
+      }
+      isFirstPoll = false;
+    } catch {}
+  }
+
+  function startPolling() {
+    poll();
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(poll, 15000);
+  }
+
+  function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { stopPolling(); } else { startPolling(); }
+  });
+
+  document.addEventListener('click', function askPermission() {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+    document.removeEventListener('click', askPermission);
+  });
+
+  startPolling();
 }
 
 document.addEventListener('DOMContentLoaded', () => ui.buildNav());

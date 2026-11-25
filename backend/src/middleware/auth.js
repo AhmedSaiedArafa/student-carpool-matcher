@@ -1,17 +1,26 @@
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config/env');
+const { query } = require('../db');
 const AppError = require('../utils/AppError');
 
-function authenticate(req, res, next) {
-  const header = req.headers.authorization;
-  if (!header || !header.startsWith('Bearer ')) {
-    throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required');
-  }
+async function authenticate(req, res, next) {
   try {
-    req.user = jwt.verify(header.slice(7), JWT_SECRET);
+    const header = req.headers.authorization;
+    if (!header || !header.startsWith('Bearer ')) {
+      return next(new AppError(401, 'UNAUTHENTICATED', 'Authentication required'));
+    }
+    try {
+      req.user = jwt.verify(header.slice(7), JWT_SECRET);
+    } catch {
+      return next(new AppError(401, 'INVALID_TOKEN', 'Invalid or expired token'));
+    }
+    const { rows } = await query('SELECT id FROM users WHERE id = $1', [req.user.id]);
+    if (rows.length === 0) {
+      return next(new AppError(401, 'SESSION_EXPIRED', 'Your session has expired. Please log in again.'));
+    }
     next();
-  } catch {
-    throw new AppError(401, 'INVALID_TOKEN', 'Invalid or expired token');
+  } catch (err) {
+    next(err);
   }
 }
 

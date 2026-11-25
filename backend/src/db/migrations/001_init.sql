@@ -93,16 +93,16 @@ CREATE TABLE IF NOT EXISTS attendance (
   UNIQUE (trip_id, user_id)
 );
 
-CREATE INDEX idx_ride_templates_driver ON ride_templates(driver_id);
-CREATE INDEX idx_ride_templates_status ON ride_templates(status);
-CREATE INDEX idx_ride_templates_weekday ON ride_templates(weekday);
-CREATE INDEX idx_trip_instances_template ON trip_instances(ride_template_id);
-CREATE INDEX idx_trip_instances_date ON trip_instances(trip_date);
-CREATE INDEX idx_trip_instances_status ON trip_instances(status);
-CREATE INDEX idx_join_requests_trip ON join_requests(trip_id);
-CREATE INDEX idx_join_requests_rider ON join_requests(rider_id);
-CREATE INDEX idx_join_requests_status ON join_requests(status);
-CREATE INDEX idx_waitlist_trip ON waitlist(trip_id);
-CREATE INDEX idx_ratings_subject ON ratings(subject_id);
-CREATE INDEX idx_notifications_user ON notifications(user_id, is_read);
-CREATE INDEX idx_attendance_trip ON attendance(trip_id);
+CREATE INDEX IF NOT EXISTS idx_ride_templates_driver ON ride_templates(driver_id);
+CREATE INDEX IF NOT EXISTS idx_ride_templates_status ON ride_templates(status);
+CREATE INDEX IF NOT EXISTS idx_ride_templates_weekday ON ride_templates(weekday);
+CREATE INDEX IF NOT EXISTS idx_trip_instances_template ON trip_instances(ride_template_id);
+CREATE INDEX IF NOT EXISTS idx_trip_instances_date ON trip_instances(trip_date);
+CREATE INDEX IF NOT EXISTS idx_trip_instances_status ON trip_instances(status);
+CREATE INDEX IF NOT EXISTS idx_join_requests_trip ON join_requests(trip_id);
+CREATE INDEX IF NOT EXISTS idx_join_requests_rider ON join_requests(rider_id);
+CREATE INDEX IF NOT EXISTS idx_join_requests_status ON join_requests(status);
+CREATE INDEX IF NOT EXISTS idx_waitlist_trip ON waitlist(trip_id);
+CREATE INDEX IF NOT EXISTS idx_ratings_subject ON ratings(subject_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, is_read);
+CREATE INDEX IF NOT EXISTS idx_attendance_trip ON attendance(trip_id);

@@ -37,6 +37,19 @@ Simulate the full AWS deployment of CarpoolMatch locally using **Floci** (LocalS
 
 Each step script can also be run on its own, e.g. `.\infra\floci\06-api-gateway.ps1`, as long as the steps before it have run.
 
+## Lab 7 / Lab 8 style (Git Bash + AWS CLI)
+
+The same deployment, done the way the labs teach it, is described step by step in
+[LAB-GUIDE.md](LAB-GUIDE.md):
+
+```bash
+bash infra/floci/deploy-backend.sh    # RDS, secret, IAM role + least-privilege policy, npm run zip, Lambda (Node.js 24), saved events
+bash infra/floci/deploy-frontend.sh   # API Gateway + S3 website
+bash infra/floci/test-events.sh       # invoke the Lambda with backend/events/*.json
+```
+
+Policy files: `infra/iam/trust-policy.json` and `infra/iam/carpool-lambda-policy.json`.
+
 ## Scripts and Owners
 
 | Script | AWS service | What it does | Owner |
@@ -47,7 +60,7 @@ Each step script can also be run on its own, e.g. `.\infra\floci\06-api-gateway.
 | `01-start-floci.ps1` | – | Starts the emulator and waits until it is ready | Remas |
 | `02-database-rds.ps1` | RDS PostgreSQL | Creates `carpool-db` and waits until it is available | Ahmed |
 | `03-secrets.ps1` | Secrets Manager | Stores `DATABASE_URL` and `JWT_SECRET` in `carpool/config` | Ahmed |
-| `04-iam-role.ps1` | IAM | Creates the Lambda role with logs-only permissions | Youssef |
+| `04-iam-role.ps1` | IAM | Creates the Lambda role and attaches the least-privilege policy from `infra/iam/` | Youssef |
 | `05-lambda.ps1` | Lambda | Zips the Express API and deploys `carpool-api` | Remas |
 | `06-api-gateway.ps1` | API Gateway v2 | Creates the HTTP API, `/api/{proxy+}` route and CORS | Remas |
 | `07-frontend-s3.ps1` | S3 | Creates the website bucket and uploads the frontend | Remas |

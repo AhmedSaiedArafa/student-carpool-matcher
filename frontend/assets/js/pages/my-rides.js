@@ -30,7 +30,7 @@ function renderRides(rides) {
               ${ui.escape(r.destination_name || r.destination_lat + ', ' + r.destination_lng)}
             </div>
             <div class="flex flex-wrap items-center gap-3 text-xs text-on-surface-variant mt-2">
-              <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-sm">repeat</span>Every ${CONFIG.WEEKDAYS[r.weekday]}</span>
+              <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-sm">${r.schedule_type === 'once' ? 'event' : 'repeat'}</span>${CONFIG.scheduleLabel(r)}</span>
               <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-sm">schedule</span>${ui.formatTime(r.departure_time)}</span>
               <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-sm">event_seat</span>${r.seats_total} seats</span>
               ${r.fare ? `<span class="inline-flex items-center gap-1 font-semibold text-secondary"><span class="material-symbols-outlined text-sm">payments</span>${r.fare} EGP</span>` : ''}

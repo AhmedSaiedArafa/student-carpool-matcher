@@ -7,4 +7,5 @@ module.exports = {
   ORS_API_KEY: process.env.ORS_API_KEY,
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5500',
   PORT: parseInt(process.env.PORT, 10) || 3000,
+  BADGE_TRUSTED_MIN_TRIPS: parseInt(process.env.BADGE_TRUSTED_MIN_TRIPS, 10) || 5,
 };

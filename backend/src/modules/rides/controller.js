@@ -3,7 +3,7 @@ const AppError = require('../../utils/AppError');
 
 function parseId(params) {
   const id = parseInt(params.id);
-  if (isNaN(id)) throw new AppError(400, 'INVALID_ID', 'Invalid ID');
+  if (isNaN(id) || id < 1) throw new AppError(400, 'INVALID_ID', 'Invalid ID');
   return id;
 }
 

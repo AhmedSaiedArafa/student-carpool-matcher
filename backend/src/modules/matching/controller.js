@@ -1,4 +1,6 @@
 const service = require('./service');
+const { geocode, reverseGeocode } = require('../../utils/geo');
+const AppError = require('../../utils/AppError');
 
 async function findMatches(req, res) {
   const matches = await service.findMatches({
@@ -16,7 +18,7 @@ async function findMatches(req, res) {
 async function requestSeat(req, res) {
   const result = await service.requestSeat(
     parseInt(req.params.id), req.user.id,
-    req.body.pickup_lat, req.body.pickup_lng
+    req.body.pickup_lat, req.body.pickup_lng, req.body.offered_fare
   );
   res.status(201).json({ data: result });
 }
@@ -62,8 +64,21 @@ async function markAllNotificationsRead(req, res) {
   res.json({ data: { success: true } });
 }
 
+async function geocodeSearch(req, res) {
+  const results = await geocode(req.query.q, 6);
+  if (!results) throw new AppError(502, 'EXTERNAL_API_ERROR', 'Geocoding service unavailable');
+  res.json({ data: results });
+}
+
+async function geocodeReverse(req, res) {
+  const name = await reverseGeocode(parseFloat(req.query.lat), parseFloat(req.query.lng));
+  if (!name) throw new AppError(502, 'EXTERNAL_API_ERROR', 'Reverse geocoding service unavailable');
+  res.json({ data: { name } });
+}
+
 module.exports = {
   findMatches, requestSeat, withdrawRequest, getMyRequests,
   joinWaitlist, leaveWaitlist, acceptWaitlistOffer,
   getNotifications, markNotificationRead, markAllNotificationsRead,
+  geocodeSearch, geocodeReverse,
 };

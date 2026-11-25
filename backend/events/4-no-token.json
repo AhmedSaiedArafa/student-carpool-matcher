@@ -1,0 +1,16 @@
+{
+  "version": "2.0",
+  "rawPath": "/api/requests/mine",
+  "rawQueryString": "",
+  "headers": {
+    "content-type": "application/json"
+  },
+  "requestContext": {
+    "http": {
+      "method": "GET",
+      "path": "/api/requests/mine",
+      "sourceIp": "127.0.0.1"
+    }
+  },
+  "isBase64Encoded": false
+}

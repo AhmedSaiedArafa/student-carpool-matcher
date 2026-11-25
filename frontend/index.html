@@ -58,7 +58,7 @@
               <span class="material-symbols-outlined text-2xl">verified_user</span>
               <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Verified Members</span>
             </div>
-            <span class="text-3xl lg:text-4xl font-bold text-on-surface tracking-tight">500+</span>
+            <span id="stat-members" class="text-3xl lg:text-4xl font-bold text-on-surface tracking-tight">--</span>
             <p class="text-xs text-on-surface-variant mt-1">Official .edu credentials verified</p>
           </div>
           <div class="bg-surface-container-lowest rounded-2xl p-5 shadow-sm">
@@ -66,7 +66,7 @@
               <span class="material-symbols-outlined text-2xl">commute</span>
               <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Journeys</span>
             </div>
-            <span class="text-3xl lg:text-4xl font-bold text-on-surface tracking-tight">1,200+</span>
+            <span id="stat-journeys" class="text-3xl lg:text-4xl font-bold text-on-surface tracking-tight">--</span>
             <p class="text-xs text-on-surface-variant mt-1">Completed campus trips</p>
           </div>
           <div class="bg-surface-container-lowest rounded-2xl p-5 shadow-sm">
@@ -75,7 +75,7 @@
               <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Avg Fare</span>
             </div>
             <div class="flex items-baseline gap-1">
-              <span class="text-3xl lg:text-4xl font-bold text-on-surface tracking-tight">45</span>
+              <span id="stat-fare" class="text-3xl lg:text-4xl font-bold text-on-surface tracking-tight">--</span>
               <span class="text-lg font-bold text-primary">EGP</span>
             </div>
             <p class="text-xs text-on-surface-variant mt-1">Versus 220+ EGP ride-hailing</p>
@@ -86,7 +86,7 @@
               <span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Trust Score</span>
             </div>
             <div class="flex items-baseline gap-1">
-              <span class="text-3xl lg:text-4xl font-bold text-on-surface tracking-tight">4.9</span>
+              <span id="stat-rating" class="text-3xl lg:text-4xl font-bold text-on-surface tracking-tight">--</span>
               <span class="text-lg text-on-surface-variant">/ 5.0</span>
             </div>
             <p class="text-xs text-on-surface-variant mt-1">Student peer reviews</p>
@@ -184,6 +184,13 @@
         cta.innerHTML = '<a href="/pages/search.html" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-on-primary text-sm font-semibold shadow-md"><span class="material-symbols-outlined text-lg">search</span>Find a Ride</a>';
       }
     }
+    fetch(`${CONFIG.API_URL}/stats`).then(r => r.json()).then(res => {
+      const s = res.data;
+      document.getElementById('stat-members').textContent = s.verified_members.toLocaleString();
+      document.getElementById('stat-journeys').textContent = s.completed_journeys.toLocaleString();
+      document.getElementById('stat-fare').textContent = s.average_fare || '0';
+      document.getElementById('stat-rating').textContent = s.average_rating || '0.0';
+    }).catch(() => {});
   </script>
 </body>
 </html>
