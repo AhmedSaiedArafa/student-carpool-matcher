@@ -25,6 +25,7 @@ $DB_PASS     = "carpool123"
 $JWT_SECRET  = "floci-jwt-secret-at-least-32-characters-long!!"
 $SECRET_NAME = "carpool/config"
 $ROLE_NAME   = "carpool-lambda-role"
+$POLICY_NAME = "carpool-lambda-access"
 $LAMBDA_NAME = "carpool-api"
 $API_NAME    = "carpool-http-api"
 $BUCKET      = "carpool-frontend"
@@ -32,6 +33,7 @@ $RULE_NAME   = "carpool-expiry-scheduler"
 $LOG_GROUP   = "/aws/lambda/$LAMBDA_NAME"
 
 $ROLE_ARN    = "arn:aws:iam::${ACCOUNT_ID}:role/$ROLE_NAME"
+$POLICY_ARN  = "arn:aws:iam::${ACCOUNT_ID}:policy/$POLICY_NAME"
 $LAMBDA_ARN  = "arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:$LAMBDA_NAME"
 $WEBSITE_URL = "http://${BUCKET}.s3-website.localhost.localstack.cloud:4566"
 
@@ -39,7 +41,8 @@ $WEBSITE_URL = "http://${BUCKET}.s3-website.localhost.localstack.cloud:4566"
 $ROOT     = Resolve-Path "$PSScriptRoot\..\.."
 $BACKEND  = "$ROOT\backend"
 $FRONTEND = "$ROOT\frontend"
-$ZIP_PATH = "$PSScriptRoot\lambda.zip"
+$IAM_DIR  = "$ROOT\infra\iam"
+$ZIP_PATH = "$BACKEND\lambda.zip"   # built by "npm run zip" (same as Lab 7)
 
 # ── aws wrapper: always talk to Floci ───────────────────────────────
 # Calls the real aws.exe (not this function) to avoid infinite recursion.
