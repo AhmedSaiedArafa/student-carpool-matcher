@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find Rides - CarpoolMatch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>tailwind.config={theme:{extend:{colors:{'surface-container-low':'#f2f3ff','secondary':'#006c49','surface-variant':'#dae2fd','surface-container-lowest':'#ffffff','on-secondary':'#ffffff','secondary-container':'#6cf8bb','on-secondary-container':'#00714d','error-container':'#ffdad6','on-error-container':'#93000a','error':'#ba1a1a','on-error':'#ffffff','primary-container':'#2563eb','on-primary-container':'#eeefff','on-primary':'#ffffff','on-surface':'#131b2e','on-surface-variant':'#434655','surface-container':'#eaedff','surface-container-high':'#e2e7ff','surface-container-highest':'#dae2fd','surface':'#faf8ff','primary':'#004ac6','primary-fixed':'#dbe1ff','on-primary-fixed':'#00174b','secondary-fixed':'#6ffbbe','outline':'#737686','outline-variant':'#c3c6d7'},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}</script>
+</head>
+<body class="bg-surface font-sans text-on-surface antialiased">
+  <header class="fixed top-0 w-full z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]" id="app-header"></header>
+
+  <main class="pt-20 pb-12">
+    <div class="max-w-7xl mx-auto px-4 lg:px-8">
+      <!-- Page Header -->
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-3xl">search</span>Find Rides
+        </h1>
+        <p class="text-sm text-on-surface-variant mt-1">Search for rides near your location</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Search Panel -->
+        <div class="lg:col-span-1">
+          <div class="bg-surface-container-lowest rounded-2xl shadow-sm p-5">
+            <form id="search-form" class="space-y-4">
+              <!-- Pickup -->
+              <div>
+                <label class="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                  <span class="material-symbols-outlined text-sm text-primary">trip_origin</span>Pickup Location
+                </label>
+                <div class="relative">
+                  <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant">search</span>
+                  <input type="text" id="origin-search" placeholder="Search or click map..." autocomplete="off"
+                    class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-outline-variant bg-surface text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                  <div id="origin-results" class="absolute top-full left-0 right-0 z-30 mt-1 bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant/50 hidden max-h-48 overflow-y-auto"></div>
+                </div>
+                <div id="origin-display" class="hidden flex items-center gap-2 px-3 py-2 rounded-xl bg-primary-fixed/30 text-sm mt-2">
+                  <span class="material-symbols-outlined text-lg text-primary">trip_origin</span>
+                  <span id="origin-name-display" class="flex-1 font-medium text-on-surface truncate"></span>
+                  <button type="button" onclick="clearLocation('origin')" class="text-on-surface-variant hover:text-error shrink-0">
+                    <span class="material-symbols-outlined text-lg">close</span>
+                  </button>
+                </div>
+                <input type="hidden" id="pickupLat" id-alias="originLat">
+                <input type="hidden" id="pickupLng" id-alias="originLng">
+              </div>
+
+              <!-- Dropoff -->
+              <div>
+                <label class="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                  <span class="material-symbols-outlined text-sm text-secondary">location_on</span>Drop-off
+                </label>
+                <div class="relative">
+                  <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant">search</span>
+                  <input type="text" id="dest-search" placeholder="Search drop-off..." autocomplete="off"
+                    class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-outline-variant bg-surface text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary transition-all">
+                  <div id="dest-results" class="absolute top-full left-0 right-0 z-30 mt-1 bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant/50 hidden max-h-48 overflow-y-auto"></div>
+                </div>
+                <div id="dest-display" class="hidden flex items-center gap-2 px-3 py-2 rounded-xl bg-secondary-container/30 text-sm mt-2">
+                  <span class="material-symbols-outlined text-lg text-secondary">location_on</span>
+                  <span id="dest-name-display" class="flex-1 font-medium text-on-surface truncate"></span>
+                  <button type="button" onclick="clearLocation('dest')" class="text-on-surface-variant hover:text-error shrink-0">
+                    <span class="material-symbols-outlined text-lg">close</span>
+                  </button>
+                </div>
+                <input type="hidden" id="dropoffLat" id-alias="destLat">
+                <input type="hidden" id="dropoffLng" id-alias="destLng">
+              </div>
+
+              <div class="border-t border-outline-variant"></div>
+
+              <!-- Filters -->
+              <div>
+                <label for="weekday" class="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                  <span class="material-symbols-outlined text-sm">calendar_today</span>Day <span class="text-outline font-normal">(optional)</span>
+                </label>
+                <select id="weekday"
+                  class="w-full px-3 py-2.5 rounded-xl border border-outline-variant bg-surface text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                  <option value="">Any day</option>
+                  <option value="0">Sunday</option>
+                  <option value="1">Monday</option>
+                  <option value="2">Tuesday</option>
+                  <option value="3">Wednesday</option>
+                  <option value="4">Thursday</option>
+                  <option value="5">Friday</option>
+                  <option value="6">Saturday</option>
+                </select>
+              </div>
+              <div>
+                <label for="departureAfter" class="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                  <span class="material-symbols-outlined text-sm">schedule</span>After <span class="text-outline font-normal">(optional)</span>
+                </label>
+                <input type="datetime-local" id="departureAfter"
+                  class="w-full px-3 py-2.5 rounded-xl border border-outline-variant bg-surface text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+              </div>
+
+              <button type="submit"
+                class="w-full py-2.5 rounded-xl bg-primary text-on-primary text-sm font-semibold shadow-md hover:bg-primary-container transition-all flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-lg">search</span>Search Rides
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Map + Results -->
+        <div class="lg:col-span-2 space-y-4">
+          <!-- Map -->
+          <div class="bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden">
+            <div class="p-3 border-b border-outline-variant/50 flex items-center justify-between">
+              <div class="flex items-center gap-2 text-sm font-semibold text-on-surface">
+                <span class="material-symbols-outlined text-lg text-primary">map</span>Map
+              </div>
+              <div class="flex gap-2">
+                <button type="button" id="pick-origin-btn" onclick="setPickMode('origin')"
+                  class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-on-primary text-xs font-semibold transition-all">
+                  <span class="material-symbols-outlined text-xs">trip_origin</span>Pickup
+                </button>
+                <button type="button" id="pick-dest-btn" onclick="setPickMode('dest')"
+                  class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-secondary text-secondary text-xs font-semibold transition-all">
+                  <span class="material-symbols-outlined text-xs">location_on</span>Drop-off
+                </button>
+              </div>
+            </div>
+            <div id="map" class="w-full" style="height:350px;"></div>
+          </div>
+
+          <!-- Results -->
+          <div id="results"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/ui.js"></script>
+  <script src="../assets/js/location-picker.js"></script>
+  <script src="../assets/js/pages/search.js"></script>
+</body>
+</html>
