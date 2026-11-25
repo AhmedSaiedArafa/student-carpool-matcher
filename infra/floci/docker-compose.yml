@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  floci:
+    image: localstack/localstack:4.0
+    container_name: floci
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,lambda,apigatewayv2,rds,secretsmanager,logs,events,scheduler,iam
+      - DEBUG=0
+      - LAMBDA_EXECUTOR=docker
+      - LAMBDA_DOCKER_NETWORK=floci-net
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DEFAULT_REGION=us-east-1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - floci-data:/var/lib/localstack
+
+networks:
+  default:
+    name: floci-net
+
+volumes:
+  floci-data:
