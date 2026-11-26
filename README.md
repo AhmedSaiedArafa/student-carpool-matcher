@@ -173,8 +173,8 @@ aws logs tail /aws/lambda/carpool-api --since 10m
 | GET | /api/notifications | Notifications | Auth |
 | PATCH | /api/notifications/:id/read | Mark read | Auth |
 | PATCH | /api/notifications/read-all | Mark all read | Auth |
-| GET | /api/geocode?q= | Place search (external API) | Public |
-| GET | /api/geocode/reverse | Coordinates → address | Public |
+| GET | /api/geocode?q= | Place search (external API) | Auth |
+| GET | /api/geocode/reverse | Coordinates → address | Auth |
 | GET | /api/stats | Home page statistics | Public |
 | GET | /api/health | Health check | Public |
 
@@ -183,7 +183,7 @@ aws logs tail /aws/lambda/carpool-api --since 10m
 1. **Email verification**: The register endpoint returns a verification token. In production, this would be sent via email. For demo/testing, seed data has `email_verified = true`. The `.edu` domain check accepts `.edu`, `.ac`, and `.edu.*` patterns.
 2. **Trip instances**: When a ride template is created, 4 weeks of trip instances are auto-generated. In production, a cron job would generate new instances weekly.
 3. **Waitlist offer window**: 30 minutes to accept a freed seat before it's offered to the next person.
-4. **Stale request expiry**: Pending requests and unanswered seat offers auto-expire after 48 hours. On Floci, EventBridge runs the expiry Lambda every 15 minutes; in production the schedule can be tuned without code changes.
+4. **Stale request expiry**: Pending requests auto-expire after 48 hours; unanswered waitlist offers expire after 30 minutes. On Floci, EventBridge runs the expiry Lambda every 15 minutes; in production the schedule can be tuned without code changes.
 5. **Coordinates**: The search uses latitude/longitude. Place names are converted to coordinates by the backend geocoder (OpenRouteService or Nominatim), limited to Egypt.
 6. **No real email sending**: Email verification flow exists in the API but no email provider is integrated.
 7. **Cloudflare Turnstile**: Not implemented — marked as optional in the spec.
@@ -207,7 +207,6 @@ aws logs tail /aws/lambda/carpool-api --since 10m
 │   ├── tests/integration.test.js
 │   └── src/
 │       ├── app.js
-│       ├── routes.js
 │       ├── config/env.js
 │       ├── db/
 │       │   ├── index.js
@@ -223,26 +222,22 @@ aws logs tail /aws/lambda/carpool-api --since 10m
 │       │   └── geo.js
 │       └── modules/
 │           ├── auth/
-│           │   ├── routes.js
 │           │   ├── controller.js
 │           │   ├── service.js
 │           │   ├── repository.js
 │           │   └── validation.js
 │           ├── rides/
-│           │   ├── routes.js
 │           │   ├── controller.js
 │           │   ├── service.js
 │           │   ├── repository.js
 │           │   └── validation.js
 │           ├── matching/
-│           │   ├── routes.js
 │           │   ├── controller.js
 │           │   ├── service.js
 │           │   ├── repository.js
 │           │   ├── validation.js
 │           │   └── notificationService.js
 │           └── history/
-│               ├── routes.js
 │               ├── controller.js
 │               ├── service.js
 │               ├── repository.js
