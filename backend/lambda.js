@@ -24,6 +24,8 @@ async function loadSecrets() {
   console.log(`Configuration loaded from secret ${secretId}`);
 }
 
+module.exports.loadSecrets = loadSecrets;
+
 module.exports.handler = async (event, context) => {
   if (!handler) {
     await loadSecrets();

@@ -137,4 +137,45 @@ function openRatingModal(tripId, subjectId, subjectName) {
   });
 }
 
+async function exportHistory() {
+  const btn = document.getElementById('export-btn');
+  btn.disabled = true;
+  btn.textContent = 'Exporting…';
+  try {
+    const result = await api.post('/history/export');
+    const blob = new Blob([result.csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `carpool-history-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    ui.toast(`Exported ${result.rows} trips and saved a copy in the cloud`);
+    loadExportInfo();
+  } catch (err) {
+    ui.toast(err.message || 'Export failed', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined text-lg">download</span>Download history (CSV)';
+  }
+}
+
+async function loadExportInfo() {
+  const el = document.getElementById('export-info');
+  try {
+    const list = await api.get('/history/exports');
+    if (list.length === 0) {
+      el.textContent = 'No exports saved yet';
+    } else {
+      const last = new Date(list[0].saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      el.textContent = `${list.length} export(s) saved in the cloud · last ${last}`;
+    }
+  } catch {
+    el.textContent = '';
+  }
+}
+
 loadHistory();
+loadExportInfo();

@@ -108,4 +108,48 @@ async function getBadges(userId) {
   return repo.getBadges(userId);
 }
 
-module.exports = { getHistory, completeTrip, getReliability, getBadges, createRating, getPendingRatings, getUserRatings };
+function escapeCell(val) {
+  let str = val == null ? '' : String(val);
+  if (/^[=+\-@]/.test(str)) str = "'" + str;
+  return '"' + str.replace(/"/g, '""') + '"';
+}
+
+async function exportHistory(userId, role) {
+  const rows = await repo.getHistory(userId, role);
+  if (rows.length === 0) throw new AppError(404, 'NO_HISTORY', 'You have no trips to export yet');
+
+  let header;
+  let mapRow;
+  if (role === 'driver') {
+    header = ['Date', 'From', 'To', 'Trip status', 'Passengers', 'Fare (EGP)'];
+    mapRow = r => [
+      r.trip_date ? new Date(r.trip_date).toISOString().split('T')[0] : '',
+      r.origin_name, r.destination_name, r.status,
+      r.passenger_count, r.fare,
+    ];
+  } else {
+    header = ['Date', 'From', 'To', 'Trip status', 'Your request', 'Driver', 'Fare (EGP)'];
+    mapRow = r => [
+      r.trip_date ? new Date(r.trip_date).toISOString().split('T')[0] : '',
+      r.origin_name, r.destination_name, r.status,
+      r.request_status, r.driver_name, r.fare,
+    ];
+  }
+
+  const lines = [header.map(escapeCell).join(',')];
+  for (const r of rows) {
+    lines.push(mapRow(r).map(escapeCell).join(','));
+  }
+  const csv = lines.join('\r\n') + '\r\n';
+
+  const exportStorage = require('./exportStorage');
+  const { bucket, key } = await exportStorage.saveExport(userId, csv);
+  return { bucket, key, rows: rows.length, csv };
+}
+
+async function listExports(userId) {
+  const exportStorage = require('./exportStorage');
+  return exportStorage.listExports(userId);
+}
+
+module.exports = { getHistory, completeTrip, getReliability, getBadges, createRating, getPendingRatings, getUserRatings, exportHistory, listExports };

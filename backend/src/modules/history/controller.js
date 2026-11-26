@@ -45,4 +45,14 @@ async function getUserRatings(req, res) {
   res.json({ data: ratings });
 }
 
-module.exports = { getHistory, completeTrip, getReliability, getBadges, createRating, getPendingRatings, getUserRatings };
+async function exportHistory(req, res) {
+  const result = await service.exportHistory(req.user.id, req.user.role);
+  res.status(201).json({ data: result });
+}
+
+async function listExports(req, res) {
+  const list = await service.listExports(req.user.id);
+  res.json({ data: list });
+}
+
+module.exports = { getHistory, completeTrip, getReliability, getBadges, createRating, getPendingRatings, getUserRatings, exportHistory, listExports };

@@ -12,6 +12,18 @@
       "Effect": "Allow",
       "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
       "Resource": "*"
+    },
+    {
+      "Sid": "PutHistoryExports",
+      "Effect": "Allow",
+      "Action": ["s3:PutObject"],
+      "Resource": "arn:aws:s3:::carpool-history-exports/exports/*"
+    },
+    {
+      "Sid": "ListHistoryExports",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": "arn:aws:s3:::carpool-history-exports"
     }
   ]
 }

@@ -175,8 +175,28 @@ async function markAllNotificationsRead(userId) {
   return notificationService.markAllRead(userId);
 }
 
+async function runExpiry() {
+  const expiredRows = await repo.expireStaleRequests();
+  for (const r of expiredRows) {
+    await notificationService.notify(r.rider_id, 'request_expired', 'Your seat request has expired after 48 hours', r.trip_id);
+  }
+
+  const expiredOffers = await repo.expireStaleOffers();
+  let reoffered = 0;
+  for (const offer of expiredOffers) {
+    const next = await repo.offerSeatToNext(offer.trip_id);
+    if (next) {
+      await notificationService.notify(next.rider_id, 'seat_offered', 'A seat has freed up! Accept within 30 minutes.', offer.trip_id);
+      reoffered++;
+    }
+  }
+
+  return { expiredRequests: expiredRows.length, expiredOffers: expiredOffers.length, reoffered };
+}
+
 module.exports = {
   findMatches, requestSeat, withdrawRequest, getMyRequests,
   joinWaitlist, leaveWaitlist, acceptWaitlistOffer,
   getNotifications, markNotificationRead, markAllNotificationsRead,
+  runExpiry,
 };

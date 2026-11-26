@@ -180,9 +180,9 @@ async function acceptWaitlistOffer(waitlistId) {
 async function expireStaleRequests() {
   const { rows } = await query(
     `UPDATE join_requests SET status = 'cancelled', decided_at = NOW()
-     WHERE status = 'pending' AND requested_at < NOW() - INTERVAL '48 hours' RETURNING id`
+     WHERE status = 'pending' AND requested_at < NOW() - INTERVAL '48 hours' RETURNING id, rider_id, trip_id`
   );
-  return rows.length;
+  return rows;
 }
 
 async function expireStaleOffers() {

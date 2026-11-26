@@ -15,7 +15,9 @@ Cloud-based ride-sharing platform for university students. Drivers publish recur
 - **Database:** **Amazon RDS PostgreSQL 16** with parameterized SQL and transactions
 - **Secrets:** **AWS Secrets Manager** (`carpool/config` holds `DATABASE_URL` and `JWT_SECRET`, loaded by the Lambda on cold start)
 - **Security:** least-privilege **IAM** role `carpool-lambda-role`, bcrypt password hashing, JWT tokens
-- **Monitoring:** **CloudWatch Logs** (`/aws/lambda/carpool-api`)
+- **Scheduled jobs:** **Amazon EventBridge** rule `carpool-expiry-every-15-min` triggers a second **Lambda** (`carpool-expiry`) to expire stale requests/offers and re-offer freed seats
+- **Object storage:** **Amazon S3** bucket `carpool-history-exports` stores trip-history CSV exports per user, with public-access blocked and AES-256 default encryption
+- **Monitoring:** **CloudWatch Logs** (`/aws/lambda/carpool-api`, `/aws/lambda/carpool-expiry`)
 - **Geo:** backend `/api/geocode` uses OpenRouteService when `ORS_API_KEY` is set, otherwise Nominatim (OpenStreetMap), limited to Egypt
 - **Cloud environment:** all AWS services run on **Floci**, a local AWS emulator (`localhost:4566`), as in Lab 7
 
@@ -118,10 +120,12 @@ Run from the project folder in Git Bash:
 export AWS_PROFILE=floci
 export MSYS_NO_PATHCONV=1          # Git Bash only: stops path conversion of /aws/... names
 docker compose -f infra/floci/docker-compose.yml up -d   # start Floci
-bash infra/floci/deploy-backend.sh   # RDS, secret, IAM role + policy, Lambda, migrations, seed
-bash infra/floci/deploy-frontend.sh  # API Gateway HTTP API + S3 website
-bash infra/floci/test-events.sh      # 7 Lambda test events
-bash infra/floci/report-tests.sh     # 53 API tests through API Gateway -> out/report-tests.md
+bash infra/floci/deploy-backend.sh          # RDS, secret, IAM role + policy, Lambda, migrations, seed
+bash infra/floci/deploy-expiry.sh           # EventBridge rule + carpool-expiry Lambda
+bash infra/floci/deploy-history-exports.sh  # S3 bucket + IAM policy update for CSV exports
+bash infra/floci/deploy-frontend.sh         # API Gateway HTTP API + S3 website
+bash infra/floci/test-events.sh             # 7 Lambda test events
+bash infra/floci/report-tests.sh            # 56 API tests through API Gateway -> out/report-tests.md
 ```
 
 `deploy-backend.sh` re-seeds the database, so log out and log in again after each backend deploy.
@@ -160,6 +164,8 @@ aws logs tail /aws/lambda/carpool-api --since 10m
 | DELETE | /api/waitlist/:id | Leave waitlist | Owner |
 | POST | /api/waitlist/:id/accept | Accept offer | Owner |
 | GET | /api/history | Trip history | Auth |
+| POST | /api/history/export | Export history to S3 as CSV | Auth |
+| GET | /api/history/exports | List saved CSV exports | Auth |
 | PATCH | /api/trips/:id/complete | Complete trip | Driver |
 | POST | /api/trips/:id/ratings | Rate | Participant |
 | GET | /api/users/:id/reliability | Reliability | Auth |
@@ -177,7 +183,7 @@ aws logs tail /aws/lambda/carpool-api --since 10m
 1. **Email verification**: The register endpoint returns a verification token. In production, this would be sent via email. For demo/testing, seed data has `email_verified = true`. The `.edu` domain check accepts `.edu`, `.ac`, and `.edu.*` patterns.
 2. **Trip instances**: When a ride template is created, 4 weeks of trip instances are auto-generated. In production, a cron job would generate new instances weekly.
 3. **Waitlist offer window**: 30 minutes to accept a freed seat before it's offered to the next person.
-4. **Stale request expiry**: Pending requests auto-expire after 48 hours (would need a cron job in production).
+4. **Stale request expiry**: Pending requests and unanswered seat offers auto-expire after 48 hours. On Floci, EventBridge runs the expiry Lambda every 15 minutes; in production the schedule can be tuned without code changes.
 5. **Coordinates**: The search uses latitude/longitude. Place names are converted to coordinates by the backend geocoder (OpenRouteService or Nominatim), limited to Egypt.
 6. **No real email sending**: Email verification flow exists in the API but no email provider is integrated.
 7. **Cloudflare Turnstile**: Not implemented — marked as optional in the spec.
@@ -189,13 +195,14 @@ aws logs tail /aws/lambda/carpool-api --since 10m
 ├── README.md
 ├── .gitignore
 ├── infra/
-│   ├── floci/   (deploy, test and Lab scripts)
+│   ├── floci/   (deploy, test and Lab scripts — includes deploy-expiry.sh, deploy-history-exports.sh)
 │   └── iam/     (trust policy + least-privilege policy)
 ├── backend/
 │   ├── package.json
 │   ├── .env.example
 │   ├── server.js
 │   ├── lambda.js
+│   ├── expiry.js
 │   ├── api/index.js
 │   ├── tests/integration.test.js
 │   └── src/
@@ -239,7 +246,8 @@ aws logs tail /aws/lambda/carpool-api --since 10m
 │               ├── controller.js
 │               ├── service.js
 │               ├── repository.js
-│               └── validation.js
+│               ├── validation.js
+│               └── exportStorage.js
 └── frontend/
     ├── index.html
     ├── pages/

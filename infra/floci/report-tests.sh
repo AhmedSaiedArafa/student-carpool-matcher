@@ -350,6 +350,14 @@ run_test "HR-09" "History" "Reliability" 200 GET "$BASE/users/$ID_D1/reliability
 run_test "HR-10" "History" "Badges" 200 GET "$BASE/users/$ID_D1/badges" \
   -H "$AUTH_R1"
 
+run_test "HR-11" "History" "Export history to S3 (CSV)" 201 POST "$BASE/history/export" \
+  -H "$AUTH_R1"
+
+run_test "HR-12" "History" "List saved exports (S3)" 200 GET "$BASE/history/exports" \
+  -H "$AUTH_R1"
+
+run_test "HR-13" "History" "Export without token (401)" 401 POST "$BASE/history/export"
+
 # ═══════════════════════════════════════════════════════════════════
 # END-TO-END (E2E)
 # ═══════════════════════════════════════════════════════════════════

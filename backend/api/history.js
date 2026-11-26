@@ -8,6 +8,8 @@ const { asyncHandler } = require('../src/middleware/errorHandler');
 const router = Router();
 
 router.get('/history', authenticate, asyncHandler(ctrl.getHistory));
+router.post('/history/export', authenticate, asyncHandler(ctrl.exportHistory));
+router.get('/history/exports', authenticate, asyncHandler(ctrl.listExports));
 router.patch('/trips/:id/complete', authenticate, requireVerified, requireRole('driver'), asyncHandler(ctrl.completeTrip));
 router.get('/users/:id/reliability', authenticate, asyncHandler(ctrl.getReliability));
 router.get('/users/:id/badges', authenticate, asyncHandler(ctrl.getBadges));
