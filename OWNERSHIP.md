@@ -66,10 +66,8 @@ Commit: Add Express skeleton, config, auth middleware and auth module
 - `backend/src/middleware/validate.js`
 - `backend/src/modules/auth/controller.js`
 - `backend/src/modules/auth/repository.js`
-- `backend/src/modules/auth/routes.js`
 - `backend/src/modules/auth/service.js`
 - `backend/src/modules/auth/validation.js`
-- `backend/src/routes.js`
 
 ## Step 4 – Remas
 
@@ -81,7 +79,6 @@ Commit: Add ride management: recurring rides, trips, request decisions, dashboar
 - `backend/lambda.js`
 - `backend/src/modules/rides/controller.js`
 - `backend/src/modules/rides/repository.js`
-- `backend/src/modules/rides/routes.js`
 - `backend/src/modules/rides/service.js`
 - `backend/src/modules/rides/validation.js`
 
@@ -94,7 +91,6 @@ Commit: Add matching, seat requests, waitlist and notifications
 - `backend/src/modules/matching/controller.js`
 - `backend/src/modules/matching/notificationService.js`
 - `backend/src/modules/matching/repository.js`
-- `backend/src/modules/matching/routes.js`
 - `backend/src/modules/matching/service.js`
 - `backend/src/modules/matching/validation.js`
 - `backend/src/utils/geo.js`
@@ -108,7 +104,6 @@ Commit: Add history, two-way ratings, reliability, error handling and tests
 - `backend/src/middleware/errorHandler.js`
 - `backend/src/modules/history/controller.js`
 - `backend/src/modules/history/repository.js`
-- `backend/src/modules/history/routes.js`
 - `backend/src/modules/history/service.js`
 - `backend/src/utils/AppError.js`
 - `backend/tests/integration.test.js`
@@ -182,18 +177,21 @@ Commit: Add Floci deployment: settings, emulator, Lambda, API Gateway, S3 hostin
 Branch: `feature/floci-ahmed`  
 Commit: Add Floci deployment: RDS, Secrets Manager, migrations, EventBridge expiry
 
+- `backend/expiry.js`
 - `infra/floci/02-database-rds.ps1`
 - `infra/floci/03-secrets.ps1`
 - `infra/floci/08-migrate-seed.ps1`
-- `infra/floci/09-eventbridge-expiry.ps1`
+- `infra/floci/deploy-expiry.sh`
 
 ## Step 12 – Youssef
 
 Branch: `feature/floci-youssef`  
 Commit: Add Floci deployment: IAM role, CloudWatch logs, verification, teardown, docs
 
+- `backend/src/modules/history/exportStorage.js`
 - `infra/floci/04-iam-role.ps1`
 - `infra/floci/10-cloudwatch-logs.ps1`
+- `infra/floci/deploy-history-exports.sh`
 - `infra/floci/README.md`
 - `infra/floci/destroy.ps1`
 - `infra/floci/logs.ps1`

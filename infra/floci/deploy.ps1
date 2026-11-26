@@ -26,7 +26,6 @@ $steps = @(
     "06-api-gateway.ps1",
     "07-frontend-s3.ps1",
     "08-migrate-seed.ps1",
-    "09-eventbridge-expiry.ps1",
     "10-cloudwatch-logs.ps1"
 )
 

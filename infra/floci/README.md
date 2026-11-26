@@ -65,7 +65,8 @@ Policy files: `infra/iam/trust-policy.json` and `infra/iam/carpool-lambda-policy
 | `06-api-gateway.ps1` | API Gateway v2 | Creates the HTTP API, `/api/{proxy+}` route and CORS | Remas |
 | `07-frontend-s3.ps1` | S3 | Creates the website bucket and uploads the frontend | Remas |
 | `08-migrate-seed.ps1` | RDS | Creates the tables and demo data | Ahmed |
-| `09-eventbridge-expiry.ps1` | EventBridge | Runs request/offer expiry every 15 minutes | Ahmed |
+| `deploy-expiry.sh` | EventBridge + Lambda | EventBridge rule + Lambda `carpool-expiry` for stale request/offer expiry | Ahmed |
+| `deploy-history-exports.sh` | S3 + IAM | Private S3 bucket `carpool-history-exports` + IAM policy update | Youssef |
 | `10-cloudwatch-logs.ps1` | CloudWatch Logs | Creates the log group with 7-day retention | Youssef |
 | `logs.ps1` | CloudWatch Logs | Shows the API logs | Youssef |
 | `verify-deployment.ps1` | – | Tests health, login, 401 and 403/404 on the deployed API | Youssef |
